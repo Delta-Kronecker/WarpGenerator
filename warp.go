@@ -134,33 +134,29 @@ func extractWarpParams(config WarpConfig, privateKey string) (WarpParams, error)
 }
 
 func getWarpParams() (WarpParams, error) {
-	maxRetries := 10
-	var lastErr error
-
-	for attempt := 1; attempt <= maxRetries; attempt++ {
+	attempt := 0
+	for {
+		attempt++
 		PublicKey, PrivateKey, err := GenerateWireGuardKeyPair()
 		if err != nil {
-			lastErr = err
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
 		config, err := fetchWarpConfig(PublicKey)
 		if err != nil {
-			lastErr = err
-			fmt.Printf("%s Attempt %d/%d failed: %v\n", errMark, attempt, maxRetries, err)
+			fmt.Printf("%s Attempt %d failed: %v\n", errMark, attempt, err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
 
 		warpConfig, err := extractWarpParams(config, PrivateKey)
 		if err != nil {
-			lastErr = err
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
 		successMessage("Registered a new warp account.\n")
 		return warpConfig, nil
 	}
-
-	return WarpParams{}, fmt.Errorf("failed to register warp account after %d attempts: %w", maxRetries, lastErr)
 }

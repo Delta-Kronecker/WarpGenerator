@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/url"
 	"os"
 	"os/exec"
@@ -107,10 +108,22 @@ func generateEndpoints() {
 	seen := make(map[string]bool)
 
 	for _, prefix := range scanConfig.SelectedPrefixes {
-		for i := 0; i < 256; i++ {
+		ips := make([]int, 256)
+		for i := range ips {
+			ips[i] = i
+		}
+		rand.Shuffle(len(ips), func(i, j int) { ips[i], ips[j] = ips[j], ips[i] })
+
+		for _, i := range ips {
 			ip := fmt.Sprintf("%s%d", prefix, i)
-			for _, port := range ports {
-				endpoint := fmt.Sprintf("%s:%d", ip, port)
+			portOrder := make([]int, len(ports))
+			for j := range portOrder {
+				portOrder[j] = j
+			}
+			rand.Shuffle(len(portOrder), func(a, b int) { portOrder[a], portOrder[b] = portOrder[b], portOrder[a] })
+
+			for _, p := range portOrder {
+				endpoint := fmt.Sprintf("%s:%d", ip, ports[p])
 				if !seen[endpoint] {
 					seen[endpoint] = true
 					endpoints = append(endpoints, endpoint)
@@ -140,28 +153,21 @@ func generateWarpConfig() error {
 		return fmt.Errorf("wgcf not found at %s", wgcfPath)
 	}
 
-	maxRetries := 10
-	var lastErr error
-
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		fmt.Printf("\n=== Registering WARP account (attempt %d/%d) ===\n", attempt, maxRetries)
+	attempt := 0
+	for {
+		attempt++
+		fmt.Printf("\n=== Registering WARP account (attempt %d) ===\n", attempt)
 		cmd := exec.Command(wgcfPath, "register")
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			lastErr = err
-			fmt.Printf("Attempt %d/%d failed: %v\n", attempt, maxRetries, err)
+			fmt.Printf("Attempt %d failed: %v\n", attempt, err)
 			time.Sleep(3 * time.Second)
 			continue
 		}
 		fmt.Println("=== WARP account registered ===")
-		lastErr = nil
 		break
-	}
-
-	if lastErr != nil {
-		return fmt.Errorf("wgcf register failed after %d attempts: %v", maxRetries, lastErr)
 	}
 
 	fmt.Println("\n=== Generating WireGuard profile ===")
@@ -534,6 +540,7 @@ func main() {
 	for i, prefix := range ipv4Prefixes {
 		fmt.Printf("\n   %s %s", fmtStr(fmt.Sprintf("%d.", i+1), GREEN, false), prefix)
 	}
+	fmt.Printf("\n   %s Custom prefix (e.g., 1.2.3.)", fmtStr("c.", GREEN, false))
 
 	fmt.Printf("\n\n%s You can select multiple (e.g., 1,3,5 or 1-5 or all)", fmtStr("Tip:", ORANGE, false))
 
@@ -550,6 +557,31 @@ func main() {
 			scanConfig.SelectedPrefixes = make([]string, len(ipv4Prefixes))
 			copy(scanConfig.SelectedPrefixes, ipv4Prefixes)
 			break
+		}
+
+		if input == "c" || input == "C" || input == "custom" || input == "CUSTOM" {
+			for {
+				fmt.Printf("\n%s Enter custom prefix (e.g., 1.2.3.): ", prompt)
+				var customPrefix string
+				fmt.Scanln(&customPrefix)
+				customPrefix = strings.TrimSpace(customPrefix)
+				if customPrefix == "" || !strings.HasSuffix(customPrefix, ".") {
+					failMessage("Invalid prefix. Must end with '.' (e.g., 1.2.3.)")
+					continue
+				}
+				scanConfig.SelectedPrefixes = append(scanConfig.SelectedPrefixes, customPrefix)
+				fmt.Printf("%s Added prefix: %s\n", succMark, customPrefix)
+				fmt.Printf("\n%s Add another prefix? (y/n) [n]: ", prompt)
+				var more string
+				fmt.Scanln(&more)
+				if more != "y" && more != "Y" {
+					break
+				}
+			}
+			if len(scanConfig.SelectedPrefixes) > 0 {
+				break
+			}
+			continue
 		}
 
 		selected := make(map[int]bool)

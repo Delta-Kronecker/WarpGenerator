@@ -10,15 +10,14 @@ Cloudflare WARP endpoint scanner and config generator.
 - UDP noise for ISP bypass
 - Ctrl+S to stop and save results
 - Generates: .conf files, wireguard:// links, Clash YAML config
-- 10 retries for WARP account registration
-- Concurrent scanning with memory-safe limits
+
 
 ### Usage
-1. Select IP ranges (e.g., `11` or `all`)
+1. Select IP ranges 
 2. Choose noise mode (1: with noise, 2: without)
 3. Set concurrent workers (default: 50)
 4. Press Ctrl+S to stop early
-5. Generate WARP config with wgcf (optional)
+5. Generate WARP config with wgcf
 
 ### Outputs
 | File | Description |
@@ -40,12 +39,6 @@ GOOS=windows GOARCH=amd64 go build -buildvcs=false -trimpath -ldflags="-w -s" -o
 GOOS=linux GOARCH=arm64 go build -buildvcs=false -trimpath -ldflags="-w -s" -o WarpGenerator .
 ```
 
-### Requirements
-- `core/xray` - Xray binary
-- `wgcf` (optional) - For WARP config generation
-
----
-
 ## فارسی
 
 ابزار اسکن و ساخت کانفیگ Cloudflare WARP
@@ -56,15 +49,14 @@ GOOS=linux GOARCH=arm64 go build -buildvcs=false -trimpath -ldflags="-w -s" -o W
 - UDP noise برای عبور از فیلترینگ ISP
 - Ctrl+S برای توقف و ذخیره نتایج
 - خروجی: فایل‌های .conf، لینک‌های wireguard://، کانفیگ Clash
-- ۱۰ بار تلاش مجدد برای ثبت حساب WARP
-- تست همزمان با محدودیت ایمن مصرف RAM
+
 
 ### نحوه استفاده
-1. رینج‌های IP رو انتخاب کنید (مثلاً `11` یا `all`)
+1. رینج‌های IP رو انتخاب کنید
 2. حالت noise رو انتخاب کنید (۱: با noise، ۲: بدون)
 3. تعداد وورکر همزمان رو تنظیم کنید (پیش‌فرض: ۵۰)
 4. Ctrl+S بزنید برای توقف زودهنگام
-5. ساخت کانفیگ WARP با wgfc (اختیاری)
+5. ساخت کانفیگ WARP با wgcf
 
 ### خروجی‌ها
 | فایل | توضیح |
@@ -85,7 +77,3 @@ GOOS=windows GOARCH=amd64 go build -buildvcs=false -trimpath -ldflags="-w -s" -o
 # Termux (ARM64)
 GOOS=linux GOARCH=arm64 go build -buildvcs=false -trimpath -ldflags="-w -s" -o WarpGenerator .
 ```
-
-### پیش‌نیازها
-- `core/xray` - باینری Xray
-- `wgfc` (اختیاری) - برای ساخت کانفیگ WARP
