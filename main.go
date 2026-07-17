@@ -153,23 +153,33 @@ func generateWarpConfig() error {
 		return fmt.Errorf("wgcf not found at %s", wgcfPath)
 	}
 
-	attempt := 0
-	for {
-		attempt++
-		fmt.Printf("\n=== Registering WARP account (attempt %d) ===\n", attempt)
-		cmd := exec.Command(wgcfPath, "register")
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("Attempt %d failed: %v\n", attempt, err)
-			time.Sleep(3 * time.Second)
-			continue
+	accountFile := "wgcf-account.toml"
+
+	// Register a new account only if we don't already have one. wgcf refuses
+	// to overwrite an existing wgcf-account.toml, which previously caused the
+	// infinite retry loop on re-runs.
+	if _, err := os.Stat(accountFile); err != nil {
+		attempt := 0
+		for {
+			attempt++
+			fmt.Printf("\n=== Registering WARP account (attempt %d) ===\n", attempt)
+			cmd := exec.Command(wgcfPath, "register")
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				fmt.Printf("Attempt %d failed: %v\n", attempt, err)
+				time.Sleep(3 * time.Second)
+				continue
+			}
+			fmt.Println("=== WARP account registered ===")
+			break
 		}
-		fmt.Println("=== WARP account registered ===")
-		break
+	} else {
+		fmt.Printf("%s Found existing %s, skipping register.\n", succMark, accountFile)
 	}
 
+	// Always (re)generate the WireGuard profile so it reflects the current account.
 	fmt.Println("\n=== Generating WireGuard profile ===")
 	cmd := exec.Command(wgcfPath, "generate")
 	cmd.Stdout = os.Stdout

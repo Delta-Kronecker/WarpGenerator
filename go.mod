@@ -5,12 +5,12 @@ go 1.24.3
 require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	golang.org/x/crypto v0.40.0
+	golang.org/x/term v0.33.0
 )
 
 require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090 // indirect
-	golang.org/x/term v0.33.0 // indirect
 )
 
 require (
